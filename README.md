@@ -55,10 +55,10 @@ measurement rules take precedence.
 
 ## Optional companion skills
 
-- [KernelWiki](https://github.com/mit-han-lab/KernelWiki) provides Blackwell/Hopper kernel
-  optimization references.
-- [ncu-report-skill](https://github.com/mit-han-lab/ncu-report-skill) provides an Nsight Compute
-  profiling workflow for B200.
+- [KernelWiki](https://github.com/mit-han-lab/KernelWiki) informs Blackwell/Hopper architecture
+  choices during planning and reassessment.
+- [ncu-report-skill](https://github.com/mit-han-lab/ncu-report-skill) diagnoses selected B200
+  kernels after whole-path mapping and investigates candidate mechanisms when useful.
 
 Install either skill alongside KEA if useful:
 

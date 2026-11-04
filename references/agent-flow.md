@@ -40,6 +40,20 @@ preprocessing, main kernels, postprocessing and relevant forward/backward or com
 critical-path evidence, overlaps, uncertainty, expected whole-path benefit and important
 outside-scope bottlenecks.
 
+Use available whole-path timing or a timeline first to select representative cases and important
+kernels, including pre- and postprocessing. When detailed profiling can resolve a relevant kernel
+bottleneck, use `ncu-report-skill` if installed and applicable (B200 / sm_100); otherwise use
+profiling tools and metrics suited to the hardware. Record the measured signals, case and dispatch,
+and feed the diagnosis into the plan. If profiling is unavailable or unsuitable, record the gap and
+choose the next safe discriminating measurement. Profiling remains subject to the applicable memory
+protection and project rules; check replay and synchronization compatibility for stateful or
+persistent kernels. Instrumented timings do not replace acceptance timing.
+
+Before choosing Blackwell/Hopper kernel architectures or techniques, use `KernelWiki` when
+installed to find relevant designs and source references; otherwise consult suitable hardware and
+implementation documentation. Record the applicable evidence and its hardware, workload and
+version context; treat external results as hypotheses until verified on this workload.
+
 Write a short plan before editing implementation code. Compare the current architecture with
 feasible alternatives, including a local improvement and a materially different cross-stage or
 structural direction when applicable. For each promising option record the expected benefit, memory
@@ -70,7 +84,8 @@ and proceed to a decision. Smoke checks do not replace the full acceptance suite
 
 For key claimed mechanisms compare the predicted evidence with the observation. If a speedup occurs
 without the predicted mechanism, keep the measured result, mark the explanation unconfirmed and
-investigate.
+investigate. When kernel-level evidence can resolve an unexpected result or verify the mechanism,
+apply the stage 2 profiling guidance to the relevant candidate and representative case.
 
 Record unavailable measurements rather than inventing evidence.
 
@@ -90,6 +105,9 @@ When progress plateaus, the bottleneck changes or measurements contradict the mo
 reassessment in [architecture search](architecture-search.md): revisit the full path, supported
 assumptions, headroom and feasible structural alternatives; update the plan and select the next
 discriminating experiment.
+
+At reassessment, repeat the stage 2 profiling and knowledge lookup when the changed bottleneck or
+new architectural direction warrants them; incorporate their evidence into the revised plan.
 
 For longer searches where the budget justifies it, retain a few structurally distinct candidates
 and, on stagnation, reassess from a concise record before cross-checking against the full history.
