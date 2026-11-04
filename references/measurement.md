@@ -28,10 +28,10 @@ tuning. Record separately whether holdout feedback influenced tuning and whether
 and results were hidden from the optimizing agent; a request not to inspect them is not isolation.
 
 When the contract requires baseline comparison, obtain baseline performance and the applicable
-per-case memory ceiling for holdout cases.
+per-case memory reference or explicit limit for holdout cases.
 
 If an independent evaluator exists, let it retain those details and apply the appropriate per-case
-memory protection to each holdout execution without exposing protected information to the search.
+memory checks and any required protection without exposing protected information to the search.
 Otherwise record what was exposed; do not claim the holdout was hidden.
 
 Freeze the candidate identity before final holdout evaluation and record feedback released to the
@@ -57,6 +57,8 @@ satisfy this step.
 ## GPU memory
 
 Choose a metric matching the user's limit and state its device/process scope, units and coverage.
+Without a specified scope, prefer a relevant process- or device-wide metric when available; otherwise
+use the best available allocator metric and record external-allocation blind spots.
 Measure the full relevant lifetime, especially from forward through backward, and keep allocations
 that are live at the boundary. Include model inputs, outputs, saved tensors, persistent workspace
 and temporary peaks if they fall within the contract; do not sum independent component peaks as if
@@ -76,71 +78,72 @@ they occurred together.
   allocation and execution conditions for baseline and candidate when both exist, including
   persistent and graph pools. Record absolute peak for each case and device, baseline delta when
   available, plus workspace and saved-state changes when observable.
-- If no explicit budget exists, the default ceiling is the corresponding measured baseline peak per
-  workload and selected scope. A candidate with a suspected excess needs a revised authorized budget
-  before execution or promotion. Estimates are not measurements. If the needed measurement coverage
-  or a baseline required by the contract is unavailable, document the gap, continue safe
-  investigation, and do not report the memory check as passed.
+- Without an explicit budget, use the comparable baseline peak for each workload and device as a
+  reference. By default, accept at most a 5% increase in the selected peak metric; this is a
+  pragmatic tolerance, not a hardware safety guarantee. Record the assumption. User or project
+  limits and tradeoffs override it. If the baseline is zero, allow no increase under this default.
+- Repeat comparable measurements when the difference is near the tolerance or measurement noise.
+  A candidate above the default tolerance can be explored when the risk procedure below permits,
+  but do not promote it unless the user authorizes the tradeoff. Report both absolute and percentage
+  changes, limitations and performance benefit. Estimates are not measurements.
+- If measurement or baseline coverage is incomplete, record the gap. Do not claim a memory result
+  beyond the measured scope or that a required criterion passed. Under the default policy, a result
+  may be accepted for the measured scope when inspection and available evidence support no material
+  increase in unmeasured allocations. Otherwise the memory result is unresolved. Disclose blind
+  spots and do not claim total GPU memory stayed within the tolerance.
 
-### Discover and verify budget protection
+### Before candidate execution
 
-Before GPU execution, identify the execution host or scheduler, driver and runtime versions, GPU
-UUIDs, visible devices for each rank, relevant allocator and allocation types, process tree and
-existing authorized limits.
+Identify the execution host, devices, existing limits and measurement coverage. Estimate the change
+in peak live memory over the full affected lifetime, including saved tensors, workspace and external
+allocations; do not assume that unchanged tensor sizes imply unchanged peak lifetimes. Check current
+available memory and expected headroom, noting other users and allocation uncertainty.
 
-Inspect the target environment itself: local, container and remote GPU capabilities may differ. Use
-the existing platform's read-only status interfaces first; do not change shared GPU or cgroup
-configuration just to discover capabilities.
+With no explicit limit, choose safeguards proportional to the candidate:
 
-On NVIDIA/Linux, an initial read-only check can use `nvidia-smi -L`,
-`nvidia-smi --query-gpu=name,driver_version,memory.total,mig.mode.current --format=csv,noheader`, `uname -r`,
-`stat -fc %T /sys/fs/cgroup` and `cat /proc/self/cgroup`. These identify available devices and
-cgroup layout, not an effective GPU memory limit. Query the actual client/cgroup using the
-platform's supported status interface; correlate its devices by UUID, including each rank and child
-process.
+- **Low risk:** for a change with no material new allocations or lifetime extension, run normal
+  staged tests when the estimate and available headroom support it. Measure peak memory and compare
+  it with the baseline; a verified process-wide hard limiter is not required.
+- **Higher or unknown risk:** examples include a large or shape-dependent workspace, new saved
+  forward tensors, or opaque allocations. Estimate size and lifetime, use an existing effective
+  limit where available, and start with a bounded smaller case when it can safely distinguish the
+  hypothesis. Check the observed peak against the estimate before scaling. Do not extrapolate from a
+  smaller case if allocation scaling or dispatch is unknown. As a default screening threshold, defer
+  a full case estimated to exceed its baseline peak by more than 20% unless the user authorizes that
+  experiment; reduce its memory use or test a smaller case first. If growth could cross that threshold
+  and cannot be estimated with reasonable confidence, defer the run until it can be bounded or
+  protected within the threshold. The 20% threshold screens experiment risk; it is not the 5%
+  acceptance tolerance or a runtime cap. When no baseline exists, use available reference
+  measurements and device headroom to assess risk, and report that a baseline-relative screen is
+  unavailable.
 
-For each applicable limit, map its accounting scope to the contract's selected peak metric and
-lifetime. Check the configured and effective limit, process/cgroup or client membership, each device
-and child process, and coverage of framework, library, custom and managed allocations. Record what
-is verified and any blind spots.
+Apply the risk assessment to warmup, smoke, correctness, profiling and acceptance runs. Record the
+estimate, relevant headroom, measurements, safeguards and blind spots. A peak reading or sampled
+monitor detects some excess only after allocation; it does not enforce a limit or guarantee that a
+short-lived peak was observed. If a candidate exceeds the tolerance, investigate and reduce its
+memory use or retain it as an exploratory tradeoff rather than silently promoting it. If an observed
+peak exceeds the 20% screening threshold, stop scaling and reassess before further full-case runs.
 
-A limit's numeric value need not mean the same thing as a framework allocated/reserved peak:
-context, caches and accounting scope can differ.
+### Explicit limits and protection
 
-If the mechanism changes GPU partitioning, visible SMs, memory or execution conditions, obtain a
-comparable baseline under those conditions; do not present that timing as a result for a different
-production configuration without separately verifying it.
+An explicit user or project memory limit applies to baseline, warmup, negative-control and candidate
+execution. Before running, use a verified runtime limit or isolation mechanism covering the required
+devices, processes, allocation types and lifetime, or a conservative, justified upper bound on
+simultaneous live allocations for that exact path that does not exceed the limit. A rough estimate,
+post-run peak or sampling monitor alone is not enforcement. If neither option covers the required
+scope, do not run the affected execution; record the gap and continue safe investigation.
 
-To verify enforcement, use a platform-provided status check or an isolated, controlled probe only
-when it can be run within the authorized resource boundary. Do not fill a shared GPU or assume an
-environment variable took effect.
+Inspect the actual target environment and effective limit, including device and process membership
+and framework, library, custom and managed allocations. Use read-only status checks or an isolated
+controlled probe within authorized boundaries. Do not alter shared GPU configuration just to discover
+capabilities, fill a shared GPU, or assume an environment variable took effect. Record coverage and
+blind spots; a framework allocator cap only covers its own allocations.
 
-If effective scope or enforcement cannot be verified, mark protection unavailable and use the
-blocked path below.
-
-An explicit user or project limit applies to baseline, warmup, negative-control and candidate GPU
-executions. When the default ceiling is derived from the first baseline, that ceiling does not yet
-exist during its measurement: respect the environment's existing resource boundaries, document the
-gap, and do not claim that the not-yet-established baseline ceiling was enforced.
-
-Once established, protect all subsequent candidate GPU execution, including warmup, smoke,
-correctness and profiling, over the contract's full lifetime on every device:
-
-- Use a verified runtime limit or isolation mechanism that prevents allocations beyond the
-  applicable ceiling, including relevant framework, library and custom allocations; record its
-  configured limit and coverage. A framework allocator cap covers only allocations controlled by
-  that allocator unless additional protection covers the rest.
-- Otherwise use a conservative, justified upper bound on the simultaneous live allocations for that
-  exact workload and execution path, including external allocations and fixed overhead; establish
-  that the bound does not exceed the ceiling. A rough estimate alone is not such a bound.
-
-Peak measurement and periodic monitoring can detect excess after it occurs; they are not hard
-prevention. If neither protection covers the required scope, leave candidate GPU execution blocked,
-record the gap and continue safe inspection or planning.
-
-Do not claim the budget was enforced. A user-authorized budget or scope change requires a new
-contract; it does not turn incomplete protection into enforcement. After execution, still measure
-the peak under the contract for acceptance.
+The limit's accounting scope can differ from the selected peak metric because of context, caches and
+other allocations. If isolation changes visible compute or memory resources, obtain a comparable
+baseline under those conditions and separately verify production timing. A user-authorized budget
+or scope change requires a new contract; incomplete protection is not enforcement. Measure the
+actual peak after execution for acceptance even when a limit was enforced.
 
 PyTorch's [per-process
 fraction](https://docs.pytorch.org/docs/stable/generated/torch.cuda.memory.set_per_process_memory_fraction.html)

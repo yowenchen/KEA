@@ -17,15 +17,16 @@ Read [agent flow](references/agent-flow.md) and follow its stages, evidence requ
 decision points. It links the measurement, architecture search and experiment-record references
 needed at each stage.
 
-The user's or project's memory limit and measurement scope apply. If no budget is specified, use
-each workload's comparable measured baseline peak as its default ceiling and state the assumption;
-an explicit user constraint or tradeoff overrides it.
+The user's or project's memory limit and measurement scope apply. Without an explicit budget, use
+each workload's comparable baseline peak as the reference, with the default acceptance tolerance
+in [measurement and validation](references/measurement.md); state the assumption.
 
 Account for saved tensors and temporary workspace over their lifetimes, including relevant
 allocations outside the framework allocator.
 
-Before running a candidate, establish the runtime budget protection specified in the measurement
-reference; an estimate or post-run peak alone does not enforce a ceiling.
+Before candidate execution, assess incremental memory risk and follow the measurement reference.
+Enforce explicit limits as specified there; for the default policy, proportionate checks and
+measurement allow ordinary low-risk experiments without a hard limiter.
 
 When required protection, baseline or memory measurement is unavailable, record the gap and continue
 safe investigation; do not claim the corresponding criterion is met or promote an unverified

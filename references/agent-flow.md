@@ -11,27 +11,28 @@ Read [measurement and validation](measurement.md). Inspect the task, implementat
 project instructions. Record the workloads and representative cases, inputs/outputs, correctness,
 allowed changes, hardware, timing and memory boundaries, constraints, commands and acceptance
 criteria. Include the full forward-to-backward lifetime when backward is in scope. If no memory
-budget is specified, use the comparable baseline peak for each workload as its default ceiling, as
+budget is specified, use the comparable baseline peak for each workload as its default reference, as
 specified in the entrypoint.
 
 Before baseline or negative-control GPU execution, apply any explicit memory limit using the
-discovery and protection procedure in the measurement reference. When the default ceiling depends on
-the first baseline, record that the ceiling is not yet established while measuring it.
+discovery and protection procedure in the measurement reference. The baseline-derived default is
+not yet established during the first baseline measurement.
 
 Measure a comparable baseline when available and check that the correctness validator rejects a
 representative controlled error; restore temporary changes. Record code/build identity, measurement
 conditions and raw evidence.
 
 If the baseline, validator or memory coverage is unavailable, record what is unknown and continue
-safe inspection or planning; do not claim that the corresponding acceptance criterion passed.
+safe investigation under the memory risk procedure; do not claim that the corresponding acceptance
+criterion passed.
 
 A new operator without a performance baseline may still be accepted against explicit absolute
 performance and memory criteria, provided those criteria and correctness can be verified
-independently; a comparative claim or default baseline-derived ceiling remains unavailable.
+independently; a comparative claim or default baseline-derived reference remains unavailable.
 
 **Ready for diagnosis:** the contract, measurement boundaries, baseline evidence and gaps are
-recorded. If the default ceiling has not been established, do not run an experiment whose memory use
-cannot be kept within an applicable limit.
+recorded. Apply the measurement reference's risk-based procedure if the default reference is
+unavailable.
 
 ## 2. Whole-path diagnosis and plan
 
@@ -70,17 +71,17 @@ Unknowns and unavailable measurements have explicit next steps or are recorded a
 
 ## 3. Implement and test a candidate
 
-Read [experiment records](experiment-records.md). Identify the candidate and parent and establish
-the runtime memory protection in [measurement and validation](measurement.md) before any candidate
-GPU execution, including warmup, smoke and correctness checks. Record its coverage and the
-candidate's memory estimate. Test one hypothesis at a time; a hypothesis may contain coupled
-changes. Record their dependency, expected intermediate regressions and group-level test before
-implementing them.
+Read [experiment records](experiment-records.md). Identify the candidate and parent and assess its
+memory risk using [measurement and validation](measurement.md) before any candidate GPU execution,
+including warmup, smoke and correctness checks. Record the estimate, risk and applicable protection
+or measurement coverage. Test one hypothesis at a time; a hypothesis may contain coupled changes.
+Record their dependency, expected intermediate regressions and group-level test before implementing
+them.
 
 Run checks in stages: compile and launch smoke, correctness, then memory and uninstrumented
-performance when it is safe and meaningful to do so. If a check fails or a resource estimate exceeds
-the limit, do not run later stages merely to fill in metrics; record them as not run or unresolved
-and proceed to a decision. Smoke checks do not replace the full acceptance suite.
+performance when it is safe and meaningful to do so. If a check fails or an explicit resource limit
+would be exceeded, do not run later stages merely to fill in metrics; record them as not run or
+unresolved and proceed to a decision. Smoke checks do not replace the full acceptance suite.
 
 For key claimed mechanisms compare the predicted evidence with the observation. If a speedup occurs
 without the predicted mechanism, keep the measured result, mark the explanation unconfirmed and

@@ -17,7 +17,7 @@ point is to reconstruct a decision, not to create a new harness or a prescribed 
   estimates and reasons for selection/deferment; falsifiable mechanisms and smallest tests; exact
   correctness and benchmark commands.
 - **Candidate:** ID and parent or recoverable code identity; intended change or coupled group;
-  workload, expected mechanism, memory estimate and runtime protection/coverage; correctness and
+  workload, expected mechanism, memory estimate, risk and safeguards/coverage; correctness and
   negative-control evidence; observed mechanism and limitations; memory per case/device; timing
   samples, variability estimate and per-case comparison; status and decision reason. Link raw
   reports when used.
@@ -41,9 +41,11 @@ decision: <keep exploring | ready for integrated acceptance | promote | reject |
 1. **Correctness:** the intended integrated path meets the numerical and behavior contract; the
    validator's negative control fails as intended. Missing or invalid evidence is unresolved, not a
    pass.
-2. **Resources:** applicable runtime protection covered the candidate execution, and measured memory
-   meets the applicable ceiling for each case and device under the selected metric and scope. If
-   protection or measurement misses relevant allocations, state the gap and do not claim a pass.
+2. **Resources:** apply the explicit-limit or default risk procedure in
+   [measurement and validation](measurement.md). For each case and device, compare measured memory
+   against the applicable explicit limit or baseline tolerance. Record measurement and protection
+   gaps; do not claim that an uncovered scope or required criterion passed. Under the default policy,
+   report acceptance only for the measured scope and its stated blind spots.
 3. **Performance:** compare the stated end-to-end target and, where applicable, per-case regressions
    under comparable conditions. A baseline-free task with an explicit absolute target can be
    evaluated against that target, but cannot claim baseline-relative improvement. Establish per-case
@@ -83,7 +85,7 @@ If a remote submission's status is unknown, reconcile it before retrying to avoi
 resume, verify the recorded code, binary, harness, input and contract identities; rerun invalidated
 evidence instead of combining incompatible results.
 
-**Illustrative result:** A baseline peak of 10 GiB and candidate peak of 11 GiB on the same workload
-and scope fails the default 10 GiB ceiling even if the candidate is faster. If the user sets an 11
-GiB limit instead, use that explicit limit and still verify correctness and whole-path performance.
-These numbers are examples, not recommended thresholds.
+**Illustrative result:** For a baseline peak of 10 GiB, the default 5% tolerance is 10.5 GiB on the
+same workload and scope. A measured 10.4 GiB can pass that check; an 11 GiB candidate needs an
+authorized tradeoff before promotion. Both still require correctness and whole-path performance
+checks. A user or project limit takes precedence.
