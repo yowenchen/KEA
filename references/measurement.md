@@ -89,7 +89,7 @@ UUIDs, visible devices for each rank, relevant allocator and allocation types, p
 existing authorized limits.
 
 Inspect the target environment itself: local, container and remote GPU capabilities may differ. Use
-the existing platform's read-only status interfaces first; do not change shared GPU, MPS or cgroup
+the existing platform's read-only status interfaces first; do not change shared GPU or cgroup
 configuration just to discover capabilities.
 
 On NVIDIA/Linux, an initial read-only check can use `nvidia-smi -L`,
@@ -142,13 +142,10 @@ Do not claim the budget was enforced. A user-authorized budget or scope change r
 contract; it does not turn incomplete protection into enforcement. After execution, still measure
 the peak under the contract for acceptance.
 
-Capability references, not universal guarantees: PyTorch's [per-process
+PyTorch's [per-process
 fraction](https://docs.pytorch.org/docs/stable/generated/torch.cuda.memory.set_per_process_memory_fraction.html)
-limits its caching allocator; NVIDIA's [MPS device memory
-limit](https://docs.nvidia.com/deploy/mps/when-to-use-mps.html#device-memory-limit) and [MPS v3
-memory partitioning](https://docs.nvidia.com/deploy/mps/mpsv3-memory-partitioning.html) have
-distinct version, device, permission and allocation-type limitations. Check the installed versions
-and effective coverage rather than assuming any mechanism applies. For metric semantics see
+limits its caching allocator. Check the effective coverage of any available mechanism rather than
+assuming it applies. For metric semantics see
 PyTorch's [allocated
 peak](https://docs.pytorch.org/docs/stable/generated/torch.cuda.memory.max_memory_allocated.html),
 [reserved

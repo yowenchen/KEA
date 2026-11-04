@@ -75,15 +75,6 @@ job/client IDs and PID namespace needed to target this run. After a hang or devi
 work owned by the run through the applicable execution system, preserve diagnostics, and use an
 appropriate lightweight health check before further experiments.
 
-For a shared NVIDIA MPS client, unsynchronized signal termination can affect the server and other
-clients. Use a scheduler operation documented to terminate MPS client contexts safely, or the
-supported MPS version's client-termination procedure; translate container PIDs to the MPS control
-namespace where required and confirm context termination completed before sending any further
-signal.
-
-See [NVIDIA's MPS early-termination
-guidance](https://docs.nvidia.com/deploy/mps/when-to-use-mps.html#client-early-termination).
-
 If ownership, permissions or the supported control path are unclear, stop retries and report the
 blocker. Do not reset a shared GPU or remove others' work. If health cannot be established, stop GPU
 experiments and report the blocker.
