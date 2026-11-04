@@ -17,16 +17,20 @@ Read [agent flow](references/agent-flow.md) and follow its stages, evidence requ
 decision points. It links the measurement, architecture search and experiment-record references
 needed at each stage.
 
-The user's or project's memory limit and measurement scope apply. Without an explicit budget, use
-each workload's comparable baseline peak as the reference, with the default acceptance tolerance
-in [measurement and validation](references/measurement.md); state the assumption.
+The user's or project's memory limit and measurement scope apply. If the user has not specified an
+allowed memory increase or equivalent task-specific peak target, ask early how much peak GPU memory
+may increase (absolute amount or percentage). A platform capacity limit alone does not express the
+user's desired tradeoff. While awaiting the answer, continue safe work that does not depend on it;
+do not assume consent or run candidate GPU experiments. Apply the answer against each workload's
+comparable baseline as described in
+[measurement and validation](references/measurement.md).
 
 Account for saved tensors and temporary workspace over their lifetimes, including relevant
 allocations outside the framework allocator.
 
 Before candidate execution, assess incremental memory risk and follow the measurement reference.
-Enforce explicit limits as specified there; for the default policy, proportionate checks and
-measurement allow ordinary low-risk experiments without a hard limiter.
+Enforce hard limits as specified there; otherwise proportionate checks and measurement allow
+ordinary low-risk experiments without a hard limiter.
 
 When required protection, baseline or memory measurement is unavailable, record the gap and continue
 safe investigation; do not claim the corresponding criterion is met or promote an unverified

@@ -41,11 +41,11 @@ decision: <keep exploring | ready for integrated acceptance | promote | reject |
 1. **Correctness:** the intended integrated path meets the numerical and behavior contract; the
    validator's negative control fails as intended. Missing or invalid evidence is unresolved, not a
    pass.
-2. **Resources:** apply the explicit-limit or default risk procedure in
+2. **Resources:** apply the hard-limit or risk-based procedure in
    [measurement and validation](measurement.md). For each case and device, compare measured memory
-   against the applicable explicit limit or baseline tolerance. Record measurement and protection
-   gaps; do not claim that an uncovered scope or required criterion passed. Under the default policy,
-   report acceptance only for the measured scope and its stated blind spots.
+   against the applicable peak limit or allowed increase over baseline. Record measurement and
+   protection gaps; do not claim that an uncovered scope or required criterion passed. Report
+   acceptance only for the measured scope and its stated blind spots.
 3. **Performance:** compare the stated end-to-end target and, where applicable, per-case regressions
    under comparable conditions. A baseline-free task with an explicit absolute target can be
    evaluated against that target, but cannot claim baseline-relative improvement. Establish per-case
@@ -85,7 +85,7 @@ If a remote submission's status is unknown, reconcile it before retrying to avoi
 resume, verify the recorded code, binary, harness, input and contract identities; rerun invalidated
 evidence instead of combining incompatible results.
 
-**Illustrative result:** For a baseline peak of 10 GiB, the default 5% tolerance is 10.5 GiB on the
-same workload and scope. A measured 10.4 GiB can pass that check; an 11 GiB candidate needs an
-authorized tradeoff before promotion. Both still require correctness and whole-path performance
-checks. A user or project limit takes precedence.
+**Illustrative result:** For a baseline peak of 10 GiB and a user-allowed increase of 5%, the
+acceptance threshold is 10.5 GiB on the same workload and scope. A measured 10.4 GiB can pass that
+check; an 11 GiB candidate needs an authorized tradeoff before promotion. Both still require
+correctness and whole-path performance checks. An applicable absolute limit also takes precedence.

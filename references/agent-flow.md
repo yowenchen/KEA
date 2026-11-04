@@ -10,13 +10,13 @@ acceptance rules.
 Read [measurement and validation](measurement.md). Inspect the task, implementation, tests and
 project instructions. Record the workloads and representative cases, inputs/outputs, correctness,
 allowed changes, hardware, timing and memory boundaries, constraints, commands and acceptance
-criteria. Include the full forward-to-backward lifetime when backward is in scope. If no memory
-budget is specified, use the comparable baseline peak for each workload as its default reference, as
-specified in the entrypoint.
+criteria. Include the full forward-to-backward lifetime when backward is in scope. Ask for the allowed
+memory increase as specified in the entrypoint when no equivalent constraint is given. Record the
+answer and use the comparable baseline peak for each workload and device as the reference.
 
-Before baseline or negative-control GPU execution, apply any explicit memory limit using the
-discovery and protection procedure in the measurement reference. The baseline-derived default is
-not yet established during the first baseline measurement.
+Before baseline or negative-control GPU execution, apply any absolute memory limit using the
+discovery and protection procedure in the measurement reference. A baseline-relative limit is not
+yet established during the first baseline measurement.
 
 Measure a comparable baseline when available and check that the correctness validator rejects a
 representative controlled error; restore temporary changes. Record code/build identity, measurement
@@ -28,11 +28,11 @@ criterion passed.
 
 A new operator without a performance baseline may still be accepted against explicit absolute
 performance and memory criteria, provided those criteria and correctness can be verified
-independently; a comparative claim or default baseline-derived reference remains unavailable.
+independently; a comparative claim or baseline-derived reference remains unavailable.
 
 **Ready for diagnosis:** the contract, measurement boundaries, baseline evidence and gaps are
-recorded. Apply the measurement reference's risk-based procedure if the default reference is
-unavailable.
+recorded. The user response may still be pending while safe work continues; apply the measurement
+reference's risk-based procedure if the baseline reference is unavailable.
 
 ## 2. Whole-path diagnosis and plan
 
@@ -77,6 +77,9 @@ including warmup, smoke and correctness checks. Record the estimate, risk and ap
 or measurement coverage. Test one hypothesis at a time; a hypothesis may contain coupled changes.
 Record their dependency, expected intermediate regressions and group-level test before implementing
 them.
+
+When the memory question is pending, continue safe planning or other work that does not depend on
+the answer; wait for the response before running candidate GPU experiments.
 
 Run checks in stages: compile and launch smoke, correctness, then memory and uninstrumented
 performance when it is safe and meaningful to do so. If a check fails or an explicit resource limit

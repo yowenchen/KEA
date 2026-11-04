@@ -78,19 +78,24 @@ they occurred together.
   allocation and execution conditions for baseline and candidate when both exist, including
   persistent and graph pools. Record absolute peak for each case and device, baseline delta when
   available, plus workspace and saved-state changes when observable.
-- Without an explicit budget, use the comparable baseline peak for each workload and device as a
-  reference. By default, accept at most a 5% increase in the selected peak metric; this is a
-  pragmatic tolerance, not a hardware safety guarantee. Record the assumption. User or project
-  limits and tradeoffs override it. If the baseline is zero, allow no increase under this default.
-- Repeat comparable measurements when the difference is near the tolerance or measurement noise.
-  A candidate above the default tolerance can be explored when the risk procedure below permits,
-  but do not promote it unless the user authorizes the tradeoff. Report both absolute and percentage
-  changes, limitations and performance benefit. Estimates are not measurements.
+- Apply the user's allowed increase to the comparable baseline peak for each workload and device,
+  using the same selected metric and scope. A percentage applies to each baseline; an absolute
+  increment is added to it. If both a peak limit and an increment are specified, satisfy both.
+  An increment needs a baseline; if none exists, request an absolute criterion rather than inventing
+  a relative result.
+- If the user explicitly delegates the choice, propose and use a 5% increase as a working acceptance
+  tolerance, recording the delegation and assumption; it is not a hardware safety guarantee. If the
+  user has not responded, the allowance is unresolved, not consent to 5%. A zero baseline has no
+  meaningful percentage increase; use an absolute criterion.
+- Repeat comparable measurements when the difference is near the allowance or measurement noise.
+  Do not run a candidate expected to exceed the user's allowance or promote one measured above it
+  without an authorized tradeoff. Report absolute and percentage changes, limitations and
+  performance benefit. Estimates are not measurements.
 - If measurement or baseline coverage is incomplete, record the gap. Do not claim a memory result
-  beyond the measured scope or that a required criterion passed. Under the default policy, a result
-  may be accepted for the measured scope when inspection and available evidence support no material
-  increase in unmeasured allocations. Otherwise the memory result is unresolved. Disclose blind
-  spots and do not claim total GPU memory stayed within the tolerance.
+  beyond the measured scope or that a required criterion passed. Without a stricter user or project
+  requirement, a result may be accepted for the measured scope when inspection and available
+  evidence support no material increase in unmeasured allocations. Otherwise the memory result is
+  unresolved. Disclose blind spots and do not claim total GPU memory stayed within the tolerance.
 
 ### Before candidate execution
 
@@ -99,7 +104,8 @@ in peak live memory over the full affected lifetime, including saved tensors, wo
 allocations; do not assume that unchanged tensor sizes imply unchanged peak lifetimes. Check current
 available memory and expected headroom, noting other users and allocation uncertainty.
 
-With no explicit limit, choose safeguards proportional to the candidate:
+When a user-provided increment is an acceptance criterion rather than a requirement for hard runtime
+enforcement, choose safeguards proportional to the candidate:
 
 - **Low risk:** for a change with no material new allocations or lifetime extension, run normal
   staged tests when the estimate and available headroom support it. Measure peak memory and compare
@@ -108,30 +114,32 @@ With no explicit limit, choose safeguards proportional to the candidate:
   forward tensors, or opaque allocations. Estimate size and lifetime, use an existing effective
   limit where available, and start with a bounded smaller case when it can safely distinguish the
   hypothesis. Check the observed peak against the estimate before scaling. Do not extrapolate from a
-  smaller case if allocation scaling or dispatch is unknown. As a default screening threshold, defer
-  a full case estimated to exceed its baseline peak by more than 20% unless the user authorizes that
-  experiment; reduce its memory use or test a smaller case first. If growth could cross that threshold
-  and cannot be estimated with reasonable confidence, defer the run until it can be bounded or
-  protected within the threshold. The 20% threshold screens experiment risk; it is not the 5%
-  acceptance tolerance or a runtime cap. When no baseline exists, use available reference
+  smaller case if allocation scaling or dispatch is unknown. Treat a predicted increase above 20%
+  of baseline as higher risk even if the user allows it: check headroom and safeguards before
+  scaling. If growth could exceed the allowed increment and cannot be estimated with reasonable
+  confidence, defer the run until it can be bounded or protected within the allowance. The 20%
+  screening threshold is not an acceptance limit or runtime cap; a user-authorized allowance above
+  it does not require repeated permission. When no baseline exists, use available reference
   measurements and device headroom to assess risk, and report that a baseline-relative screen is
   unavailable.
 
 Apply the risk assessment to warmup, smoke, correctness, profiling and acceptance runs. Record the
 estimate, relevant headroom, measurements, safeguards and blind spots. A peak reading or sampled
 monitor detects some excess only after allocation; it does not enforce a limit or guarantee that a
-short-lived peak was observed. If a candidate exceeds the tolerance, investigate and reduce its
+short-lived peak was observed. If a candidate exceeds the allowance, investigate and reduce its
 memory use or retain it as an exploratory tradeoff rather than silently promoting it. If an observed
 peak exceeds the 20% screening threshold, stop scaling and reassess before further full-case runs.
 
-### Explicit limits and protection
+### Hard limits and protection
 
-An explicit user or project memory limit applies to baseline, warmup, negative-control and candidate
-execution. Before running, use a verified runtime limit or isolation mechanism covering the required
-devices, processes, allocation types and lifetime, or a conservative, justified upper bound on
-simultaneous live allocations for that exact path that does not exceed the limit. A rough estimate,
-post-run peak or sampling monitor alone is not enforcement. If neither option covers the required
-scope, do not run the affected execution; record the gap and continue safe investigation.
+Apply an absolute user or project memory limit to baseline, warmup, negative-control and candidate
+execution. If an allowed increment must also never be exceeded during execution, apply its derived
+limit to candidate runs. Before the affected execution, use a verified runtime limit or isolation
+mechanism covering the required devices, processes, allocation types and lifetime, or a conservative,
+justified upper bound on simultaneous live allocations for that exact path that does not exceed the
+limit. A rough estimate, post-run peak or sampling monitor alone is not enforcement. If neither
+option covers the required scope, do not run the affected execution; record the gap and continue
+safe investigation.
 
 Inspect the actual target environment and effective limit, including device and process membership
 and framework, library, custom and managed allocations. Use read-only status checks or an isolated

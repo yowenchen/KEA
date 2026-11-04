@@ -32,13 +32,15 @@ KEA follows an evidence-driven loop:
 3. Test candidates, record results, and reassess when the bottleneck or evidence changes.
 4. Accept a candidate only after integrated correctness, memory, and performance checks.
 
-When no memory budget is specified, KEA compares each workload's peak memory with its baseline and
-uses a default 5% tolerance for acceptance. Ordinary low-risk experiments can proceed without a
-hard limiter; changes with substantial or uncertain memory growth need additional safeguards or
-smaller tests before scaling. The default screening threshold for a full experiment is 20% above
-baseline; it is not a runtime cap. An explicit user or project limit takes precedence and requires
-verified protection or a justified upper bound before execution. Measurements and sampled monitors
-alone do not enforce a limit.
+If the user has not specified a memory increase or equivalent task-specific peak target, KEA asks how
+much extra peak GPU memory is acceptable before running candidate GPU experiments. It applies the
+answer to the comparable baseline for each workload and device. If the user delegates the choice,
+KEA uses a 5% increase as the working acceptance tolerance; silence is not consent. Ordinary
+low-risk experiments can proceed without a hard limiter, while substantial or uncertain growth
+needs additional checks before scaling.
+An explicit absolute limit, or a requirement never to exceed an increment during execution, requires
+verified protection or a justified upper bound. Measurements and sampled monitors alone do not
+enforce a limit.
 
 KEA is a workflow, not a memory limiter or benchmark service. It relies on the target environment's
 actual protection, profiling, tests, and evaluation tools. Framework allocator statistics and caps
