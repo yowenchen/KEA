@@ -53,9 +53,22 @@ measurement rules take precedence.
 - [Architecture search](references/architecture-search.md): whole-path diagnosis and reassessment.
 - [Experiment records](references/experiment-records.md): evidence, acceptance, and recovery.
 
-KEA can use `KernelWiki` for Blackwell/Hopper research and `ncu-report-skill` for B200 profiling
-when those skills are installed. They are not bundled in this repository; otherwise, use suitable
-hardware documentation and profiling tools.
+## Optional companion skills
+
+- [KernelWiki](https://github.com/mit-han-lab/KernelWiki) provides Blackwell/Hopper kernel
+  optimization references.
+- [ncu-report-skill](https://github.com/mit-han-lab/ncu-report-skill) provides an Nsight Compute
+  profiling workflow for B200.
+
+Install either skill alongside KEA if useful:
+
+```bash
+git clone https://github.com/mit-han-lab/KernelWiki.git "${CODEX_HOME:-$HOME/.codex}/skills/KernelWiki"
+git clone https://github.com/mit-han-lab/ncu-report-skill.git "${CODEX_HOME:-$HOME/.codex}/skills/ncu-report-skill"
+```
+
+See each upstream repository for its requirements. Both are optional and are not bundled with KEA;
+without them, use suitable hardware documentation and profiling tools.
 
 ## Validation status
 

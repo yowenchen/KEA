@@ -31,9 +31,9 @@ When required protection, baseline or memory measurement is unavailable, record 
 safe investigation; do not claim the corresponding criterion is met or promote an unverified
 candidate.
 
-For Blackwell/Hopper research, use the `KernelWiki` skill when it is installed; otherwise consult
-appropriate hardware documentation.
+For Blackwell/Hopper research, use [KernelWiki](https://github.com/mit-han-lab/KernelWiki) when it
+is installed; otherwise consult appropriate hardware documentation.
 
-For Nsight Compute on B200 / sm_100, use `ncu-report-skill` when it is installed. Otherwise, use
-profiling guidance and metrics applicable to the hardware. Component contracts do not replace
-correctness and synchronization testing.
+For Nsight Compute on B200 / sm_100, use [ncu-report-skill](https://github.com/mit-han-lab/ncu-report-skill)
+when it is installed. Otherwise, use profiling guidance and metrics applicable to the hardware.
+Component contracts do not replace correctness and synchronization testing.
