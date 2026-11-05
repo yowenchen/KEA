@@ -71,8 +71,13 @@ Unknowns and unavailable measurements have explicit next steps or are recorded a
 
 ## 3. Implement and test a candidate
 
-Read [experiment records](experiment-records.md). Identify the candidate and parent and assess its
-memory risk using [measurement and validation](measurement.md) before any candidate GPU execution,
+Read [experiment records](experiment-records.md). Before choosing the next hypothesis, refresh the
+original objective and constraints, current best, recent successes and failures, and relevant
+reference evidence from the records. Compare with the full history when needed to avoid repeating a
+failed direction.
+
+Identify the candidate and parent and assess its memory risk using
+[measurement and validation](measurement.md) before any candidate GPU execution,
 including warmup, smoke and correctness checks. Record the estimate, risk and applicable protection
 or measurement coverage. Test one hypothesis at a time; a hypothesis may contain coupled changes.
 Record their dependency, expected intermediate regressions and group-level test before implementing

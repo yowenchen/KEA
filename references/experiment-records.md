@@ -15,7 +15,7 @@ point is to reconstruct a decision, not to create a new harness or a prescribed 
   uncommitted source changes; distinguish verified integrity from a procedural check.
 - **Stage map and plan:** critical-path evidence and uncertainty; architecture alternatives,
   estimates and reasons for selection/deferment; falsifiable mechanisms and smallest tests; exact
-  correctness and benchmark commands.
+  correctness and benchmark commands; relevant external implementation and revision when used.
 - **Candidate:** ID and parent or recoverable code identity; intended change or coupled group;
   workload, expected mechanism, memory estimate, risk and safeguards/coverage; correctness and
   negative-control evidence; observed mechanism and limitations; memory per case/device; timing
@@ -47,14 +47,19 @@ decision: <keep exploring | ready for integrated acceptance | promote | reject |
    protection gaps; do not claim that an uncovered scope or required criterion passed. Report
    acceptance only for the measured scope and its stated blind spots.
 3. **Performance:** compare the stated end-to-end target and, where applicable, per-case regressions
-   under comparable conditions. A baseline-free task with an explicit absolute target can be
-   evaluated against that target, but cannot claim baseline-relative improvement. Establish per-case
-   variability before judging a gain; without it, the apparent improvement is uncertain. Apply the
+   under comparable conditions. Compare relevant objective metrics with both the initial baseline and
+   current best when available; apply the contract's tradeoff rules. A baseline-free task with an
+   explicit absolute target can be evaluated against that target, but cannot claim baseline-relative
+   improvement. Establish per-case variability before judging a gain; without it, the apparent
+   improvement is uncertain. Apply the
    user's or project's estimator, tolerance and acceptance rule; a noise-sized difference remains
    uncertain unless the rule establishes otherwise. Profiling explains a result but does not replace
    uninstrumented acceptance timing.
 4. **Integration:** verify that dispatch uses the intended candidate, and rerun the checks above
    after integration with the evaluator boundary in [measurement and validation](measurement.md).
+   If the intended integration base has advanced since the experiment began, re-evaluate the
+   candidate against the updated base before promotion; preserve both candidate and current best
+   until then.
    Report holdout visibility and whether integrity was enforced or procedural; do not label an
    exposed holdout as hidden or a tuning-used holdout as independently held out. If no candidate
    meets the contract, retain the last valid implementation and report the blocker or next

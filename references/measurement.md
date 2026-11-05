@@ -11,15 +11,21 @@ the resources held by preparation may still count toward peak memory.
 - Identify hardware and device count, code/build identity, dtype, shapes, strides/layouts, input
   distribution, seeds, concurrency and execution mode (including graph capture if applicable).
   Select representative and boundary cases; keep a holdout for shape generalization when in scope.
-  State any weighting and per-case regression limits. Follow the holdout procedure below.
+  Give cases stable identities so targeted reruns can be matched to the full suite. State any
+  weighting and per-case regression limits. Follow the holdout procedure below.
 - Define exactly which dispatch, allocations, preparation, synchronization, forward, saved state and
   backward are inside the timing and memory boundaries. Record warmup, repetitions, estimator, noise
   treatment, reset requirements and exact commands. Record user-specified time, GPU, iteration or
-  cost limits and stop conditions when provided. Preserve the frozen acceptance inputs, reference
-  and thresholds; a changed contract requires a new comparison.
-- Verify the oracle rejects a controlled incorrect output for affected behavior. Restore temporary
-  changes and run the correct baseline when one exists. An invalid or unavailable oracle blocks
-  claims of correctness; a single negative control proves only that particular error is detected.
+  cost limits and stop conditions when provided. Define each decision metric's unit, direction and
+  aggregation, and account for setup, compilation and validation in a wall-clock budget when the
+  user's budget includes them. Preserve the frozen acceptance inputs, reference and thresholds; a
+  changed contract requires a new comparison.
+- Establish the correctness reference from the specification, a trusted independent implementation
+  or, when the contract requires behavior preservation, the frozen baseline. It must not call the
+  candidate as its oracle. Verify the oracle rejects a controlled incorrect output for affected
+  behavior. Restore temporary changes and run the correct baseline when one exists. An invalid or
+  unavailable oracle blocks claims of correctness; a negative control only tests that particular
+  error.
 
 ### Holdout and evaluator boundary
 
@@ -179,6 +185,12 @@ report the estimator and uncertainty.
 
 Interleaving is not a cure for all interference or thermal drift.
 
+For short GPU kernels, check whether CPU submission gaps leave the GPU idle between timed calls when
+that would distort the intended metric. Use a workload-compatible measurement method and confirm its
+timing boundary. Graph replay, batching or queued work may change launch overhead, cache, clocks or
+execution semantics: use them for acceptance only when they match the contract; otherwise label them
+diagnostic and retain the contract's measurement for the result.
+
 Exercise the actual integrated path, including dispatch, fallback and relevant forward/backward
 behavior. Verify correctness against the contract over representative, boundary and applicable
 adversarial inputs; include repeated execution, state reset, concurrency or synchronization cases
@@ -189,6 +201,14 @@ baseline on failure. Integration must be remeasured even if a standalone kernel 
 
 Separate smoke tests and partial workload samples from the complete acceptance matrix. Incomplete,
 timed-out or failed cases are not passing results.
+
+Where practical, verify outputs or state from the actual timed executions outside the timing boundary,
+especially for repeated or stateful calls. For matching cases, keep verification and benchmark inputs
+and dispatch consistent; record intentional differences. Preserve required inputs and outputs
+without changing the measured resource contract; if outputs are overwritten or retaining them would
+alter memory use, adapt the harness or verify a representative subset and record that coverage. A
+separate rerun does not prove that the timed calls were correct. If the contract requires checks that
+cannot be performed, mark acceptance unresolved.
 
 Before reusing results or accepting a resumed run, compare the relevant code, built artifacts,
 harness, inputs and contract with the recorded identities; changes can invalidate prior evidence.

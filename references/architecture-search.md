@@ -49,6 +49,11 @@ not require a specific instruction merely to imitate a reference. If performance
 mechanism is unconfirmed, retain the result, revise the explanation and identify a discriminating
 follow-up.
 
+When external implementations can inform a direction, select references by operator, hardware and
+implementation language. Record the relevant entry point, revision and applicable design idea with
+its source; check workload and version differences before using its claims. Consult references as
+needed instead of cloning a fixed set for every task.
+
 ## Reassess and choose the next search
 
 Set review checkpoints appropriate to the task's time and experiment budget. Reassess when repeated
@@ -101,3 +106,5 @@ unchanged contract.
   preserving experience.
 - [KernelOPT](https://arxiv.org/html/2609.30059): diverse candidate search and end-to-end
   verification; its reported search-time correctness flag is not used to filter beam ranking.
+- [autokernel-skills](https://github.com/reyoung/autokernel-skills/tree/f37bd4d02eca8c0e71124a10c25a1a95a091b29c):
+  operator-specific references, benchmark construction and experiment context.
