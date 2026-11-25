@@ -5,7 +5,7 @@ Use existing project formats when they capture this evidence.
 Otherwise keep a concise plan and append-only candidate/measurement log in the task workspace. The
 point is to reconstruct a decision, not to create a new harness or a prescribed file tree.
 
-## Minimum records
+## Evidence worth recording
 
 - **Contract and baseline:** task objective; workload cases and holdout if needed, including what
   the optimizer could see and what influenced tuning; correctness and resource limits; timing and
@@ -13,9 +13,8 @@ point is to reconstruct a decision, not to create a new harness or a prescribed 
   input/configuration identity, hardware/software versions, execution conditions, commands and
   baseline samples; acceptance rule. Use project fingerprints or hashes where available, including
   uncommitted source changes; distinguish verified integrity from a procedural check.
-- **Stage map and plan:** critical-path evidence and uncertainty; architecture alternatives,
-  estimates and reasons for selection/deferment; falsifiable mechanisms and smallest tests; exact
-  correctness and benchmark commands; relevant external implementation and revision when used.
+- **Diagnosis for consequential choices:** the relevant critical-path evidence and uncertainty,
+  the mechanism under test, and why the chosen experiment can inform the next decision.
 - **Candidate:** ID and parent or recoverable code identity; intended change or coupled group;
   workload, expected mechanism, memory estimate, risk and safeguards/coverage; correctness and
   negative-control evidence; observed mechanism and limitations; memory per case/device; timing
@@ -34,18 +33,20 @@ change / hypothesis: <mechanism, expected evidence; coupled steps if any>
 contract: <workload; timing and memory scopes; limits>
 evidence: <correctness; memory per device; baseline/candidate samples; mechanism observation; report links>
 decision: <keep exploring | ready for integrated acceptance | promote | reject | unresolved; reason and next step>
+if no gain: <what the result rules out; direction remains open | defer with revisit condition | close with evidence>
 ```
 
 ## Decision rules
 
-1. **Correctness:** the intended integrated path meets the numerical and behavior contract; the
-   validator's negative control fails as intended. Missing or invalid evidence is unresolved, not a
-   pass.
+1. **Correctness:** the intended integrated path meets the numerical and behavior contract. Use
+   trusted or independently checked validation evidence as described in
+   [measurement and validation](measurement.md#freeze-the-contract).
 2. **Resources:** apply the hard-limit or risk-based procedure in
    [measurement and validation](measurement.md). For each case and device, compare measured memory
-   against the applicable peak limit or allowed increase over baseline. Record measurement and
-   protection gaps; do not claim that an uncovered scope or required criterion passed. Report
-   acceptance only for the measured scope and its stated blind spots.
+   against the target and any agreed tolerance, and verify applicable hard limits. Keep promising
+   over-target candidates eligible for [memory recovery](measurement.md#recover-memory-on-a-promising-candidate).
+   Record measurement and protection gaps. Report acceptance only for the measured scope and its
+   stated blind spots.
 3. **Performance:** compare the stated end-to-end target and, where applicable, per-case regressions
    under comparable conditions. Compare relevant objective metrics with both the initial baseline and
    current best when available; apply the contract's tradeoff rules. A baseline-free task with an
@@ -65,6 +66,25 @@ decision: <keep exploring | ready for integrated acceptance | promote | reject |
    meets the contract, retain the last valid implementation and report the blocker or next
    experiment; do not silently relax limits. If the fastest fails, another recorded candidate may be
    evaluated under the same contract.
+
+## Interpret a no-gain result
+
+Apply this at candidate decision time when a screen shows no meaningful gain, a regression, or
+an inconclusive result.
+
+1. Verify the binary, actual dispatch and workload exercised the intended change. Check whether
+   measurement variability can explain the result. Record unresolved evidence and the cheapest
+   check that could make it interpretable.
+2. Compare the predicted local effect with the evidence. If the effect was absent, identify what
+   in this implementation could explain it. If the effect occurred but whole-path latency did
+   not improve, check whether the work was on the critical path or whether overlap or added cost
+   offset the gain. Mark explanations without evidence as hypotheses. Choose a focused follow-up
+   when its result could change the next decision.
+3. Record what the result rules out and decide the direction separately. Close a direction only
+   when the evidence addresses the shared mechanism, such as a measured upper bound too small to
+   matter or a demonstrated conflict with the task constraints. Otherwise keep it open or defer
+   it with a reason and a condition for revisiting it. A local rejection can coexist with an
+   open direction. Use the available budget to decide whether to run the follow-up now.
 
 ## Interrupted or failed runs
 
@@ -89,8 +109,3 @@ experiments and report the blocker.
 If a remote submission's status is unknown, reconcile it before retrying to avoid duplicate jobs. On
 resume, verify the recorded code, binary, harness, input and contract identities; rerun invalidated
 evidence instead of combining incompatible results.
-
-**Illustrative result:** For a baseline peak of 10 GiB and a user-allowed increase of 5%, the
-acceptance threshold is 10.5 GiB on the same workload and scope. A measured 10.4 GiB can pass that
-check; an 11 GiB candidate needs an authorized tradeoff before promotion. Both still require
-correctness and whole-path performance checks. An applicable absolute limit also takes precedence.

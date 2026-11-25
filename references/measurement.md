@@ -8,11 +8,9 @@ the resources held by preparation may still count toward peak memory.
 
 ## Freeze the contract
 
-- Identify hardware and device count, code/build identity, dtype, shapes, strides/layouts, input
-  distribution, seeds, concurrency and execution mode (including graph capture if applicable).
-  Select representative and boundary cases; keep a holdout for shape generalization when in scope.
-  Give cases stable identities so targeted reruns can be matched to the full suite. State any
-  weighting and per-case regression limits. Follow the holdout procedure below.
+- Identify the tested build, hardware, workload and execution mode. Record the relevant input
+  details and any weighting or per-case regression limits. Use the holdout guidance when claiming
+  generalization from tuned cases or when the task requires it.
 - Define exactly which dispatch, allocations, preparation, synchronization, forward, saved state and
   backward are inside the timing and memory boundaries. Record warmup, repetitions, estimator, noise
   treatment, reset requirements and exact commands. Record user-specified time, GPU, iteration or
@@ -22,16 +20,16 @@ the resources held by preparation may still count toward peak memory.
   changed contract requires a new comparison.
 - Establish the correctness reference from the specification, a trusted independent implementation
   or, when the contract requires behavior preservation, the frozen baseline. It must not call the
-  candidate as its oracle. Verify the oracle rejects a controlled incorrect output for affected
-  behavior. Restore temporary changes and run the correct baseline when one exists. An invalid or
-  unavailable oracle blocks claims of correctness; a negative control only tests that particular
-  error.
+  candidate as its oracle. Reuse trusted validation evidence that covers the affected behavior.
+  Check a new or materially changed validator with a representative controlled error, then restore
+  the normal inputs. An invalid or unavailable oracle leaves correctness unresolved.
 
 ### Holdout and evaluator boundary
 
-When shape generalization is in scope, define the valid domain and search/acceptance split before
-tuning. Record separately whether holdout feedback influenced tuning and whether its cases, inputs
-and results were hidden from the optimizing agent; a request not to inspect them is not isolation.
+When a holdout is part of the validation, define its domain and separation from tuning before
+using it. Record whether its feedback influenced tuning and whether its cases, inputs and results
+were hidden from the optimizing agent. A request to avoid inspecting them provides procedural
+separation only.
 
 When the contract requires baseline comparison, obtain baseline performance and the applicable
 per-case memory reference or explicit limit for holdout cases.
@@ -62,7 +60,11 @@ satisfy this step.
 
 ## GPU memory
 
-Choose a metric matching the user's limit and state its device/process scope, units and coverage.
+Record whether each memory number is a target for the delivered result or a hard execution limit.
+A budget stated for the current task without an execution restriction is a target. An explicit
+must-never-exceed constraint or enforced environment limit is a hard limit. Use the current task's
+target and any user- or project-authorized tolerance. Choose a matching metric and state its
+device/process scope, units and coverage.
 Without a specified scope, prefer a relevant process- or device-wide metric when available; otherwise
 use the best available allocator metric and record external-allocation blind spots.
 Measure the full relevant lifetime, especially from forward through backward, and keep allocations
@@ -84,19 +86,18 @@ they occurred together.
   allocation and execution conditions for baseline and candidate when both exist, including
   persistent and graph pools. Record absolute peak for each case and device, baseline delta when
   available, plus workspace and saved-state changes when observable.
-- Apply the user's allowed increase to the comparable baseline peak for each workload and device,
+- Apply a relative target to the comparable baseline peak for each workload and device,
   using the same selected metric and scope. A percentage applies to each baseline; an absolute
-  increment is added to it. If both a peak limit and an increment are specified, satisfy both.
+  increment is added to it. Apply applicable targets and execution limits independently.
   An increment needs a baseline; if none exists, request an absolute criterion rather than inventing
   a relative result.
-- If the user explicitly delegates the choice, propose and use a 5% increase as a working acceptance
-  tolerance, recording the delegation and assumption; it is not a hardware safety guarantee. If the
-  user has not responded, the allowance is unresolved, not consent to 5%. A zero baseline has no
-  meaningful percentage increase; use an absolute criterion.
-- Repeat comparable measurements when the difference is near the allowance or measurement noise.
-  Do not run a candidate expected to exceed the user's allowance or promote one measured above it
-  without an authorized tradeoff. Report absolute and percentage changes, limitations and
-  performance benefit. Estimates are not measurements.
+- If the user delegates the tradeoff, choose and record a tolerance justified by the workload
+  and device headroom. Use an absolute criterion when the baseline is zero.
+- Repeat comparable measurements when a small overage could be explained by measurement noise.
+  Report the measured delta, uncertainty and performance benefit. For promotion, apply the target
+  with any stated tolerance or delegated judgment. If the result falls outside that scope, keep it
+  exploratory or seek agreement on the specific tradeoff. A small overage alone does not establish
+  a universal tolerance.
 - If measurement or baseline coverage is incomplete, record the gap. Do not claim a memory result
   beyond the measured scope or that a required criterion passed. Without a stricter user or project
   requirement, a result may be accepted for the measured scope when inspection and available
@@ -110,8 +111,8 @@ in peak live memory over the full affected lifetime, including saved tensors, wo
 allocations; do not assume that unchanged tensor sizes imply unchanged peak lifetimes. Check current
 available memory and expected headroom, noting other users and allocation uncertainty.
 
-When a user-provided increment is an acceptance criterion rather than a requirement for hard runtime
-enforcement, choose safeguards proportional to the candidate:
+Apply any [hard limit](#hard-limits-and-protection) before running. Choose safeguards proportional
+to the candidate:
 
 - **Low risk:** for a change with no material new allocations or lifetime extension, run normal
   staged tests when the estimate and available headroom support it. Measure peak memory and compare
@@ -119,26 +120,43 @@ enforcement, choose safeguards proportional to the candidate:
 - **Higher or unknown risk:** examples include a large or shape-dependent workspace, new saved
   forward tensors, or opaque allocations. Estimate size and lifetime, use an existing effective
   limit where available, and start with a bounded smaller case when it can safely distinguish the
-  hypothesis. Check the observed peak against the estimate before scaling. Do not extrapolate from a
-  smaller case if allocation scaling or dispatch is unknown. Treat a predicted increase above 20%
-  of baseline as higher risk even if the user allows it: check headroom and safeguards before
-  scaling. If growth could exceed the allowed increment and cannot be estimated with reasonable
-  confidence, defer the run until it can be bounded or protected within the allowance. The 20%
-  screening threshold is not an acceptance limit or runtime cap; a user-authorized allowance above
-  it does not require repeated permission. When no baseline exists, use available reference
-  measurements and device headroom to assess risk, and report that a baseline-relative screen is
-  unavailable.
+  hypothesis. Check the observed peak against the estimate before scaling. Bound memory separately
+  for larger cases if allocation scaling or dispatch is unknown. When no baseline exists, use
+  available reference measurements and device headroom to assess risk, and report that a
+  baseline-relative screen is unavailable.
+
+If no delivery allowance is specified, a bounded screen can proceed when the candidate's memory
+risk is understood and available headroom and hard limits permit. Ask about the tradeoff when the
+answer would affect the scope of the search or the delivered choice. Record the measured change
+and seek agreement before accepting a material increase with no agreed allowance.
 
 Apply the risk assessment to warmup, smoke, correctness, profiling and acceptance runs. Record the
 estimate, relevant headroom, measurements, safeguards and blind spots. A peak reading or sampled
 monitor detects some excess only after allocation; it does not enforce a limit or guarantee that a
-short-lived peak was observed. If a candidate exceeds the allowance, investigate and reduce its
-memory use or retain it as an exploratory tradeoff rather than silently promoting it. If an observed
-peak exceeds the 20% screening threshold, stop scaling and reassess before further full-case runs.
+short-lived peak was observed. If the observed peak invalidates the estimate used to establish
+safe headroom, reassess before scaling.
+
+### Recover memory on a promising candidate
+
+When a correct candidate delivers a substantial measured speedup while exceeding a memory target,
+retain it alongside the best candidate within the target. If hard limits and device headroom
+permit, use the faster version as a parent for further performance work. Keep its code identity,
+timings and measured overage recoverable. Pursue memory recovery once the performance direction
+is established, or sooner if memory headroom would block the next useful experiment.
+
+Identify the allocations live at peak and quantify how many bytes to recover. Test feasible
+changes such as shortening a buffer lifetime, reusing workspace or trading storage for
+recomputation. Compare both peak and latency on the same workload against the fast parent and
+the in-target candidate. Recheck both metrics after integration.
+
+If practical recovery options are exhausted and the result still exceeds the current task's
+target and any agreed tolerance, request user review. Include its code identity, performance
+benefit, measured peak and overage, the recovery attempts and outcomes, and the best in-target
+alternative when available. Keep both available for the decision.
 
 ### Hard limits and protection
 
-Apply an absolute user or project memory limit to baseline, warmup, negative-control and candidate
+Apply an absolute hard memory limit to baseline, warmup, negative-control and candidate
 execution. If an allowed increment must also never be exceeded during execution, apply its derived
 limit to candidate runs. Before the affected execution, use a verified runtime limit or isolation
 mechanism covering the required devices, processes, allocation types and lifetime, or a conservative,
@@ -168,6 +186,18 @@ peak](https://docs.pytorch.org/docs/stable/generated/torch.cuda.memory.max_memor
 [reserved
 peak](https://docs.pytorch.org/docs/stable/generated/torch.cuda.memory.max_memory_reserved.html) and
 [CUDA memory management](https://docs.pytorch.org/docs/stable/notes/cuda.html#memory-management).
+
+## Screen the mechanism on informative cases
+
+Start with a case where the hypothesized effect should be visible and, when available, a matched
+control where it should be weaker or absent. Use code and available measurements to choose the
+cases. Keep route or input distribution, execution mode and other settings matched where practical,
+and verify the actual dispatch in both cases. If changing the mode also changes scheduling or
+overlap, record that confound and use a focused check if it affects the decision.
+
+Pair baseline and candidate within each case. Record the per-case result, variability and whether it
+supports the predicted effect. Expand coverage when the signal warrants it. Repeat a noisy screen
+when resolving it would change the next decision. Use the full task contract for acceptance.
 
 ## Compare performance and correctness
 

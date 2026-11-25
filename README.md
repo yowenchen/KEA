@@ -25,22 +25,15 @@ $kea Optimize this operator's forward and backward on H100. Keep peak GPU memory
 per device and evaluate end-to-end latency across the documented training shapes.
 ```
 
-KEA follows an evidence-driven loop:
+With a trusted baseline and a concrete hypothesis, start with a focused paired experiment. Choose
+planning, profiling, and architecture comparisons according to what the next decision needs.
+Record consequential experiments and verify the final implementation on its actual call path for
+correctness, memory, and performance.
 
-1. Define the task contract and measure a baseline.
-2. Map the complete execution path and compare feasible architectural directions.
-3. Test candidates, record results, and reassess when the bottleneck or evidence changes.
-4. Accept a candidate only after integrated correctness, memory, and performance checks.
-
-If the user has not specified a memory increase or equivalent task-specific peak target, KEA asks how
-much extra peak GPU memory is acceptable before running candidate GPU experiments. It applies the
-answer to the comparable baseline for each workload and device. If the user delegates the choice,
-KEA uses a 5% increase as the working acceptance tolerance; silence is not consent. Ordinary
-low-risk experiments can proceed without a hard limiter, while substantial or uncertain growth
-needs additional checks before scaling.
-An explicit absolute limit, or a requirement never to exceed an increment during execution, requires
-verified protection or a justified upper bound. Measurements and sampled monitors alone do not
-enforce a limit.
+A memory target guides delivery. A promising candidate above target can remain in the search while
+the team works to reduce peak memory. Bounded experiments can proceed when the memory risk is
+understood, device headroom is sufficient, and applicable hard limits are satisfied. A hard
+execution limit requires verified protection or a justified upper bound.
 
 KEA is a workflow, not a memory limiter or benchmark service. It relies on the target environment's
 actual protection, profiling, tests, and evaluation tools. Framework allocator statistics and caps

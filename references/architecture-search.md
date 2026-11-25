@@ -1,8 +1,7 @@
 # Whole-path diagnosis and architecture search
 
-Use this reference before implementation and when progress stalls or the measured bottleneck
-changes. Keep task-specific evidence in the workspace, not in the installed skill. Adapt the amount
-of exploration to the user's scope and budget.
+Use the parts that help explain the current result or select the next experiment. Match the depth
+of diagnosis to the decision, scope and budget.
 
 ## Map the work
 
@@ -27,9 +26,31 @@ time cannot improve whole-path latency by more than `f`; this bound does not app
 dependencies, overlap or the algorithm change. Use actual workload frequency or critical-path data
 where available and report per-case regressions.
 
-## Compare directions before tuning
+### Diagnose headroom inside fused kernels
 
-For the current design and each promising alternative, capture:
+When a fused kernel contributes material latency, use source and dispatch to map the internal
+stages that could explain it. Mark each relevant stage's cost as measured, bounded or unknown.
+Choose a matched pair of workload cases that changes the work in the suspected stage while
+holding other inputs and settings steady where practical. Record the actual dispatch for both
+cases. Use the pair to select a stage to investigate, since a mode change can also alter scheduling
+or overlap.
+
+Before deprioritizing a stage after a local candidate fails, record the exact hypothesis that
+the result ruled out or left unresolved. If the stage could still contribute meaningful latency,
+select the cheapest discriminating check, such as targeted instrumentation, a focused component
+benchmark or a mechanism replacement that preserves the surrounding work. For example, in fused
+backward, compare main-gradient accumulation with overwrite, then test the accumulation mechanism
+with the same routing, communication and matrix multiplication where practical. A wider global
+store tests one implementation choice. An alternate read–accumulate–write path tests a different
+mechanism.
+
+Record the stage evidence, what it says about remaining headroom and the next decision. If the
+check is unavailable or disproportionate to the task, record the unresolved headroom and the
+reason for deferral. Confirm any gain with uninstrumented timing at the task's measurement boundary.
+
+## Compare directions
+
+When choosing between promising alternatives, consider:
 
 - Algorithm and execution structure: stage and fusion boundaries, layout/data movement, parallel
   decomposition, scheduling, persistent versus non-persistent execution and dispatch as applicable.
@@ -54,6 +75,13 @@ implementation language. Record the relevant entry point, revision and applicabl
 its source; check workload and version differences before using its claims. Consult references as
 needed instead of cloning a fixed set for every task.
 
+## Choose the next experiment
+
+Balance the remaining end-to-end headroom, how much a result could change the next decision, and
+what the experiment costs. If local variants start repeating the same question, consider a cheap
+test of another mechanism even while the current direction yields gains. Follow strong evidence
+directly when the next experiment is clear.
+
 ## Reassess and choose the next search
 
 Set review checkpoints appropriate to the task's time and experiment budget. Reassess when repeated
@@ -61,18 +89,10 @@ distinct attempts do not yield a meaningful improvement beyond noise, the decisi
 current approach is exhausted, the critical path changes, correctness/debugging stalls, or observed
 behavior contradicts the model. Do not use a universal fixed number of attempts.
 
-At a checkpoint, record: current best and validated metrics; which bottleneck and assumptions the
-evidence supports or contradicts; remaining headroom; whether attempted changes are only local
-variants; at least one feasible structural alternative or why none is within scope; the next
-discriminating experiment and expected cost. Update the plan or explain why the existing direction
-remains best. Keep earlier candidate identities and failed experiments available.
-
-Before declaring the task complete, review each promising in-scope structural alternative from the
-plan. Record either a low-cost discriminating validation and its result, or a specific
-evidence-backed reason to defer it, such as a measured bottleneck or upper bound, an incompatible
-contract constraint, or disproportionate cost relative to the remaining user-specified budget. An
-untested possibility is not a disproven design. Do not require implementing a structural alternative
-that the evidence or task scope does not justify.
+At a checkpoint, revisit the best validated result, the evidence for the current bottleneck and
+the remaining headroom. Choose an experiment that resolves a consequential uncertainty or record
+why the direction is being deferred. Revisit untested alternatives when they could materially
+affect the outcome.
 
 For long searches where multiple structural directions are feasible and the expected value justifies
 the cost, keep a small portfolio: for each architecture record its defining difference, best valid
@@ -85,15 +105,12 @@ retired.
 If no budget was specified, track cost and review points without inventing a hard limit or declaring
 success when an arbitrary count is reached.
 
-A fresh diagnosis may temporarily omit stale speculation, but must retain the contract, verified
-evidence and best implementation, then compare new ideas with the complete history before execution.
-This can be done by one agent; delegation and parallel runs are conditional on available
-authorization, tools and uncontended GPU resources.
+A fresh diagnosis can start from the contract, verified evidence and best implementation. Consult
+earlier experiments when they bear on the new idea.
 
-**Coupled changes:** If a larger tile is expected to hurt occupancy until a matching work partition
-is added, treat both as one hypothesis. Record the dependency, memory estimates and expected
-intermediate regression before testing the group. Accept only the completed candidate against the
-unchanged contract.
+**Coupled changes:** Test dependent changes together when the mechanism requires it. For example,
+test a larger tile with its matching work partition if the tile alone would hurt occupancy.
+Record the dependency and evaluate the combined result against the task contract.
 
 ## Further reading
 

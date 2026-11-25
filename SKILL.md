@@ -1,42 +1,15 @@
 ---
 name: kea
-description: Apply Kernel Evolution Agents (KEA) when asked for KEA or an evolutionary GPU kernel optimization workflow that explores whole-path bottlenecks and architecture changes while respecting resource constraints, including when no memory budget was specified.
+description: Use KEA when asked for KEA or iterative, evidence-driven GPU kernel optimization against workload, correctness and resource goals.
 ---
 
 # Kernel Evolution Agents
 
-Evolve the implementation against the user's actual workload, end-to-end objective and resource
-constraints.
+Optimize the user's actual workload. Follow project rules and keep task evidence in the workspace.
 
-The user's requirements and project rules take precedence. Put task artifacts in the implementation
-workspace, following existing conventions; do not modify this installed skill during a task.
+Use the [agent flow](references/agent-flow.md) to choose how to start, run experiments and validate
+the result. Choose the order, depth and tools that best advance the task.
 
-## Run the workflow
-
-Read [agent flow](references/agent-flow.md) and follow its stages, evidence requirements and
-decision points. It links the measurement, architecture search and experiment-record references
-needed at each stage.
-
-The user's or project's memory limit and measurement scope apply. If the user has not specified an
-allowed memory increase or equivalent task-specific peak target, ask early how much peak GPU memory
-may increase (absolute amount or percentage). A platform capacity limit alone does not express the
-user's desired tradeoff. While awaiting the answer, continue safe work that does not depend on it;
-do not assume consent or run candidate GPU experiments. Apply the answer against each workload's
-comparable baseline as described in
-[measurement and validation](references/measurement.md).
-
-Account for saved tensors and temporary workspace over their lifetimes, including relevant
-allocations outside the framework allocator.
-
-Before candidate execution, assess incremental memory risk and follow the measurement reference.
-Enforce hard limits as specified there; otherwise proportionate checks and measurement allow
-ordinary low-risk experiments without a hard limiter.
-
-When required protection, baseline or memory measurement is unavailable, record the gap and continue
-safe investigation; do not claim the corresponding criterion is met or promote an unverified
-candidate.
-
-[KernelWiki](https://github.com/mit-han-lab/KernelWiki) and
-[ncu-report-skill](https://github.com/mit-han-lab/ncu-report-skill) are optional companion skills;
-the agent flow specifies when to use them and what to do when they are unavailable. Component
-contracts do not replace correctness and synchronization testing.
+Honor runtime hard limits. Treat memory targets as delivery criteria and use the
+[memory guidance](references/measurement.md#gpu-memory) for uncertain allocations or promising
+candidates above target.
