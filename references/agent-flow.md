@@ -2,26 +2,26 @@
 
 ## Start from the best available evidence
 
-Identify the objective, workload, correctness and resource constraints, and what the clock
-includes. Reuse project harnesses and evidence that match the code, binary and workload.
+Identify the objective, workload, correctness and resource constraints, and measurement boundary.
+Reuse project harnesses and evidence that match the implementation and workload.
 
-With a trusted baseline, a usable correctness check and a concrete idea, start with a
+With a trusted baseline, a usable correctness check and a concrete idea, you can start with a
 [focused paired screen](measurement.md#screen-the-mechanism-on-informative-cases). If the next
-decision depends on a missing baseline, uncertain dispatch or an unclear bottleneck, fill that gap
-first. A short note in the experiment log is enough for a small experiment. Use a fuller plan
-when dependencies or risks make it useful.
+decision depends on a missing baseline, uncertainty about which code ran or an unclear bottleneck,
+fill that gap first. A short note in the experiment log is enough for a small experiment. Use a
+fuller plan when dependencies or risks make it useful.
 
 Before GPU execution, apply project rules, verify any applicable hard limits and assess memory
 and execution risks for the cases being run. Use the
 [memory-risk guidance](measurement.md#before-candidate-execution) when peak growth or device
-headroom is uncertain. Check synchronization and replay compatibility when profiling stateful
-or persistent kernels.
+headroom is uncertain. If a profiler replays work, check that replay preserves the behavior
+being measured.
 
 ## Search and learn
 
 Use source, timings, analytical bounds, profiles or references as they help answer the current
 question. [Architecture search](architecture-search.md) covers diagnosing the whole path,
-including dispatch, dependencies, overlap and memory lifetimes. For hardware-specific questions,
+including dependencies, overlap and memory lifetimes. For hardware-specific questions,
 KernelWiki and an appropriate profiler are available when useful.
 
 Choose experiments for expected payoff and what they can teach. Try local changes, architectural
@@ -47,10 +47,10 @@ if the final result needs a tradeoff.
 
 ## Validate the result
 
-Verify that the integrated call path runs the intended implementation. Apply the task's
-[correctness, memory and timing criteria](measurement.md) on the required workloads. Use
-comparable, uninstrumented measurements for claimed speedups and check relevant regressions.
-Tie the evidence to the delivered code and configuration.
+Verify the intended implementation through the entry point the task targets. Apply the task's
+[correctness, resource and performance criteria](measurement.md) on the required workloads.
+Measure the agreed metrics under comparable conditions, separately from diagnostic profiling.
+Check relevant regressions and tie the evidence to the delivered code and configuration.
 
 Report results, remaining tradeoffs and any unmet criteria. If no candidate qualifies, preserve
 the best verified result and explain what blocked delivery or still needs a decision.

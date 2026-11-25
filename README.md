@@ -21,17 +21,17 @@ Invoke `$kea` in a Codex conversation and describe the workload, target hardware
 requirements, and any latency or memory constraints. For example:
 
 ```text
-$kea Optimize this operator's forward and backward on H100. Keep peak GPU memory below 40 GiB
-per device and evaluate end-to-end latency across the documented training shapes.
+$kea Reduce end-to-end latency for this workload on the target GPU. Preserve the existing
+numerical tolerances and report peak memory across the documented input sizes.
 ```
 
-With a trusted baseline and a concrete hypothesis, start with a focused paired experiment. Choose
-planning, profiling, and architecture comparisons according to what the next decision needs.
+With a trusted baseline and a concrete hypothesis, a focused paired experiment can be a first
+step. Choose planning, profiling, and architecture comparisons according to what the next decision needs.
 Record consequential experiments and verify the final implementation on its actual call path for
 correctness, memory, and performance.
 
 A memory target guides delivery. A promising candidate above target can remain in the search while
-the team works to reduce peak memory. Bounded experiments can proceed when the memory risk is
+peak memory is reduced. Bounded experiments can proceed when the memory risk is
 understood, device headroom is sufficient, and applicable hard limits are satisfied. A hard
 execution limit requires verified protection or a justified upper bound.
 
@@ -43,7 +43,7 @@ measurement rules take precedence.
 ## Files
 
 - [SKILL.md](SKILL.md): skill entry point and essential constraints.
-- [Agent flow](references/agent-flow.md): stages, decisions, and completion criteria.
+- [Agent flow](references/agent-flow.md): exploration decisions and acceptance criteria.
 - [Measurement and validation](references/measurement.md): memory, benchmarking, and holdout
   procedures.
 - [Architecture search](references/architecture-search.md): whole-path diagnosis and reassessment.
@@ -53,8 +53,8 @@ measurement rules take precedence.
 
 - [KernelWiki](https://github.com/mit-han-lab/KernelWiki) informs Blackwell/Hopper architecture
   choices during planning and reassessment.
-- [ncu-report-skill](https://github.com/mit-han-lab/ncu-report-skill) diagnoses selected B200
-  kernels after whole-path mapping and investigates candidate mechanisms when useful.
+- [ncu-report-skill](https://github.com/mit-han-lab/ncu-report-skill) provides targeted profiling
+  guidance for B200 kernels.
 
 Install either skill alongside KEA if useful:
 

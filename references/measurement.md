@@ -11,13 +11,12 @@ the resources held by preparation may still count toward peak memory.
 - Identify the tested build, hardware, workload and execution mode. Record the relevant input
   details and any weighting or per-case regression limits. Use the holdout guidance when claiming
   generalization from tuned cases or when the task requires it.
-- Define exactly which dispatch, allocations, preparation, synchronization, forward, saved state and
-  backward are inside the timing and memory boundaries. Record warmup, repetitions, estimator, noise
-  treatment, reset requirements and exact commands. Record user-specified time, GPU, iteration or
-  cost limits and stop conditions when provided. Define each decision metric's unit, direction and
-  aggregation, and account for setup, compilation and validation in a wall-clock budget when the
-  user's budget includes them. Preserve the frozen acceptance inputs, reference and thresholds; a
-  changed contract requires a new comparison.
+- Define which work is timed and which allocations and lifetimes count toward peak memory.
+  Record warmup, repetitions, estimator, noise treatment, reset requirements and exact commands.
+  Record user-specified time, GPU, iteration or cost limits and stop conditions when provided.
+  Define each decision metric's unit, direction and aggregation. Count setup, compilation and
+  validation toward a wall-clock budget when the user's budget includes them. Preserve the
+  acceptance inputs, reference and thresholds. If they change, rerun the affected comparisons.
 - Establish the correctness reference from the specification, a trusted independent implementation
   or, when the contract requires behavior preservation, the frozen baseline. It must not call the
   candidate as its oracle. Reuse trusted validation evidence that covers the affected behavior.
@@ -26,10 +25,10 @@ the resources held by preparation may still count toward peak memory.
 
 ### Holdout and evaluator boundary
 
-When a holdout is part of the validation, define its domain and separation from tuning before
-using it. Record whether its feedback influenced tuning and whether its cases, inputs and results
-were hidden from the optimizing agent. A request to avoid inspecting them provides procedural
-separation only.
+For an independent holdout, reserve cases or a sampling rule before tuning. If a holdout is added
+later, freeze the candidate and select fresh cases independently of its results. Record whether
+holdout information influenced tuning and whether its cases, inputs and results were hidden from
+the optimizing agent. A request to avoid inspecting them provides procedural separation only.
 
 When the contract requires baseline comparison, obtain baseline performance and the applicable
 per-case memory reference or explicit limit for holdout cases.
@@ -48,7 +47,7 @@ criterion as unresolved.
 
 Prefer the project's trusted evaluator and immutable input/contract snapshots, when available.
 Before accepting results, verify that the actual evaluator, oracle, inputs, thresholds and candidate
-source/build identities match the frozen contract and that the full acceptance matrix ran.
+source/build identities match the frozen contract and that the required cases ran.
 
 Preserve original evaluator outputs; a candidate's own summary is not a substitute. If tests or the
 evaluator must change, record why and re-establish the affected baseline and evidence; honor
@@ -60,17 +59,15 @@ satisfy this step.
 
 ## GPU memory
 
-Record whether each memory number is a target for the delivered result or a hard execution limit.
-A budget stated for the current task without an execution restriction is a target. An explicit
-must-never-exceed constraint or enforced environment limit is a hard limit. Use the current task's
-target and any user- or project-authorized tolerance. Choose a matching metric and state its
-device/process scope, units and coverage.
+Record where each memory constraint applies. Treat a stated memory budget as a delivery target
+unless the task or environment applies it to execution. Apply hard limits to the runs they cover.
+Use the current task's target and any user- or project-authorized tolerance. Choose a matching
+metric and state its device/process scope, units and coverage.
 Without a specified scope, prefer a relevant process- or device-wide metric when available; otherwise
 use the best available allocator metric and record external-allocation blind spots.
-Measure the full relevant lifetime, especially from forward through backward, and keep allocations
-that are live at the boundary. Include model inputs, outputs, saved tensors, persistent workspace
-and temporary peaks if they fall within the contract; do not sum independent component peaks as if
-they occurred together.
+Measure the full relevant lifetime and include allocations that are already live when measurement
+begins. Count inputs, outputs, retained state, scratch space and temporary peaks as specified in
+the contract. Only combine component allocations that are live at the same time.
 
 - Framework **allocated** peak describes live allocations tracked by the allocator; framework
   **reserved** peak includes its cached blocks. Neither automatically includes allocations from
@@ -117,13 +114,13 @@ to the candidate:
 - **Low risk:** for a change with no material new allocations or lifetime extension, run normal
   staged tests when the estimate and available headroom support it. Measure peak memory and compare
   it with the baseline; a verified process-wide hard limiter is not required.
-- **Higher or unknown risk:** examples include a large or shape-dependent workspace, new saved
-  forward tensors, or opaque allocations. Estimate size and lifetime, use an existing effective
+- **Higher or unknown risk:** examples include a large or input-dependent workspace, newly retained
+  state, or opaque allocations. Estimate size and lifetime, use an existing effective
   limit where available, and start with a bounded smaller case when it can safely distinguish the
   hypothesis. Check the observed peak against the estimate before scaling. Bound memory separately
-  for larger cases if allocation scaling or dispatch is unknown. When no baseline exists, use
-  available reference measurements and device headroom to assess risk, and report that a
-  baseline-relative screen is unavailable.
+  for larger cases if their allocation scaling or implementation is uncertain. When no baseline
+  exists, use available reference measurements and device headroom to assess risk, and report
+  that a baseline-relative screen is unavailable.
 
 If no delivery allowance is specified, a bounded screen can proceed when the candidate's memory
 risk is understood and available headroom and hard limits permit. Ask about the tradeoff when the
@@ -138,21 +135,21 @@ safe headroom, reassess before scaling.
 
 ### Recover memory on a promising candidate
 
-When a correct candidate delivers a substantial measured speedup while exceeding a memory target,
-retain it alongside the best candidate within the target. If hard limits and device headroom
-permit, use the faster version as a parent for further performance work. Keep its code identity,
-timings and measured overage recoverable. Pursue memory recovery once the performance direction
-is established, or sooner if memory headroom would block the next useful experiment.
+When a correct candidate delivers a substantial measured improvement while exceeding a memory
+target, retain it and the best in-target candidate if one exists. If hard limits and device
+headroom permit, use the improved version as a parent for further performance work. Keep its
+code identity, results and measured overage recoverable. Pursue memory recovery once the
+performance direction is established, or sooner if headroom would block the next useful experiment.
 
 Identify the allocations live at peak and quantify how many bytes to recover. Test feasible
 changes such as shortening a buffer lifetime, reusing workspace or trading storage for
-recomputation. Compare both peak and latency on the same workload against the fast parent and
-the in-target candidate. Recheck both metrics after integration.
+recomputation. Compare peak memory and the task metric on the same workload against the parent
+and the best in-target alternative when available. Recheck both after integration.
 
-If practical recovery options are exhausted and the result still exceeds the current task's
-target and any agreed tolerance, request user review. Include its code identity, performance
-benefit, measured peak and overage, the recovery attempts and outcomes, and the best in-target
-alternative when available. Keep both available for the decision.
+If feasible recovery work within the task's scope and budget leaves the result above the allowed
+peak, request user review. Include its code identity, performance benefit, measured peak and
+overage, the recovery attempts and outcomes, and the best in-target alternative when available.
+Keep both available for the decision.
 
 ### Hard limits and protection
 
@@ -191,8 +188,8 @@ peak](https://docs.pytorch.org/docs/stable/generated/torch.cuda.memory.max_memor
 
 Start with a case where the hypothesized effect should be visible and, when available, a matched
 control where it should be weaker or absent. Use code and available measurements to choose the
-cases. Keep route or input distribution, execution mode and other settings matched where practical,
-and verify the actual dispatch in both cases. If changing the mode also changes scheduling or
+cases. Keep input distribution, execution mode and other settings matched where practical,
+and verify which implementation ran in both cases. If changing the mode also changes scheduling or
 overlap, record that confound and use a focused check if it affects the decision.
 
 Pair baseline and candidate within each case. Record the per-case result, variability and whether it
@@ -221,20 +218,19 @@ timing boundary. Graph replay, batching or queued work may change launch overhea
 execution semantics: use them for acceptance only when they match the contract; otherwise label them
 diagnostic and retain the contract's measurement for the result.
 
-Exercise the actual integrated path, including dispatch, fallback and relevant forward/backward
-behavior. Verify correctness against the contract over representative, boundary and applicable
+Exercise the workload through its normal entry point, including any relevant fallback behavior.
+Verify correctness against the contract over representative, boundary and applicable
 adversarial inputs; include repeated execution, state reset, concurrency or synchronization cases
 when relevant.
 
-Confirm the optimized implementation is actually called when the contract requires it. Preserve the
-baseline on failure. Integration must be remeasured even if a standalone kernel passed.
+Confirm the measured path used the optimized implementation. If the intended workload spans
+surrounding operations, verify it there even if the standalone result passed.
 
-Separate smoke tests and partial workload samples from the complete acceptance matrix. Incomplete,
-timed-out or failed cases are not passing results.
+Treat smoke and partial results as exploratory. Count completed, verified cases toward acceptance.
 
 Where practical, verify outputs or state from the actual timed executions outside the timing boundary,
 especially for repeated or stateful calls. For matching cases, keep verification and benchmark inputs
-and dispatch consistent; record intentional differences. Preserve required inputs and outputs
+and implementation consistent. Record intentional differences. Preserve required inputs and outputs
 without changing the measured resource contract; if outputs are overwritten or retaining them would
 alter memory use, adapt the harness or verify a representative subset and record that coverage. A
 separate rerun does not prove that the timed calls were correct. If the contract requires checks that
@@ -245,7 +241,6 @@ harness, inputs and contract with the recorded identities; changes can invalidat
 Run baseline and candidate without competing GPU experiments when practical, or record contention
 and treat affected measurements as inconclusive.
 
-**Example:** A candidate saves a forward activation to avoid backward recomputation. Measure the
-selected memory metric over the complete forward-to-backward lifetime and compare the integrated
-forward+backward latency against the same workload's baseline. A backward-only timing or the size of
-the saved tensor alone cannot establish either acceptance condition.
+**Example:** If a candidate keeps an intermediate to speed up a later operation, measure latency
+across the work affected and peak memory over the intermediate's lifetime. Compare both with the
+same workload's baseline.

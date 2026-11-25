@@ -8,15 +8,14 @@ of diagnosis to the decision, scope and budget.
 Record the end-to-end baseline for each representative workload when available; for a new operator
 without one, record that gap and map the reference path or available estimates.
 
-Build a compact stage map with stage/dispatch, operation or kernel, input shape, time or
-critical-path contribution, memory lifetime, overlap/dependencies, evidence and uncertainty. Include
-setup, preprocessing, communication and postprocessing when inside the user's boundary, along with
-main kernels and relevant forward/backward.
+Map the work inside the measurement boundary at the granularity needed for the decision. Identify
+the work done, its inputs, time or contribution to the critical path, dependencies, overlap and
+memory lifetime. Include setup, data movement and surrounding operations when relevant.
 
 If a stage cannot be isolated, mark it unknown and identify the cheapest measurement that would
 change the decision.
 
-Rank opportunities by expected end-to-end impact and cost, not kernel duration alone.
+Rank opportunities by expected impact on the task objective and the cost of pursuing them.
 
 Distinguish CPU and GPU time and account for overlapping work; summed GPU durations are not
 necessarily wall time.
@@ -26,23 +25,19 @@ time cannot improve whole-path latency by more than `f`; this bound does not app
 dependencies, overlap or the algorithm change. Use actual workload frequency or critical-path data
 where available and report per-case regressions.
 
-### Diagnose headroom inside fused kernels
+### Diagnose remaining headroom
 
-When a fused kernel contributes material latency, use source and dispatch to map the internal
-stages that could explain it. Mark each relevant stage's cost as measured, bounded or unknown.
-Choose a matched pair of workload cases that changes the work in the suspected stage while
-holding other inputs and settings steady where practical. Record the actual dispatch for both
-cases. Use the pair to select a stage to investigate, since a mode change can also alter scheduling
-or overlap.
+When a material cost is hidden in an aggregate measurement, break the work down along a useful
+boundary. That may be part of one operation or work spread across multiple operations. Mark the
+suspected cost as measured, bounded or unknown. When possible, compare two cases that vary the
+suspected work while holding other settings steady. Verify which implementation ran and check
+whether the comparison also changed dependencies or overlap.
 
-Before deprioritizing a stage after a local candidate fails, record the exact hypothesis that
-the result ruled out or left unresolved. If the stage could still contribute meaningful latency,
-select the cheapest discriminating check, such as targeted instrumentation, a focused component
-benchmark or a mechanism replacement that preserves the surrounding work. For example, in fused
-backward, compare main-gradient accumulation with overwrite, then test the accumulation mechanism
-with the same routing, communication and matrix multiplication where practical. A wider global
-store tests one implementation choice. An alternate read–accumulate–write path tests a different
-mechanism.
+Use the [no-gain guidance](experiment-records.md#interpret-a-no-gain-result) after a local
+candidate fails. If the stage could still affect the objective materially, consider targeted
+instrumentation, a focused component benchmark or a mechanism replacement that preserves the
+surrounding work. For example, vectorizing loads can reduce instruction overhead, while a
+different layout can reduce redundant reads. Test the explanation relevant to the observed cost.
 
 Record the stage evidence, what it says about remaining headroom and the next decision. If the
 check is unavailable or disproportionate to the task, record the unresolved headroom and the
@@ -52,16 +47,12 @@ reason for deferral. Confirm any gain with uninstrumented timing at the task's m
 
 When choosing between promising alternatives, consider:
 
-- Algorithm and execution structure: stage and fusion boundaries, layout/data movement, parallel
-  decomposition, scheduling, persistent versus non-persistent execution and dispatch as applicable.
-  A different tile size alone is normally a local variant, not a new architecture.
+- Algorithm and execution structure: how work is grouped, represented, moved and scheduled.
 - Claimed bottleneck and evidence; the expected whole-path benefit or upper bound and cases where it
   matters. Label analytic estimates, profiler observations and measured results separately.
 - Memory lifetime and peak estimate, correctness and interface consequences, affected components,
   risks and minimum experiment capable of falsifying the hypothesis.
-- Choice and reason: selected, deferred or infeasible. A reasonable cross-stage option can be a
-  split, fusion, alternate routing or scheduling, or a saved-state/recompute choice; respect
-  explicit constraints and do not force an unsuitable design.
+- Choice and reason: selected, deferred or infeasible given the task constraints.
 
 For an intended mechanism, predict an observable direction against a comparable baseline, such as
 less local-memory traffic for a spill-reduction hypothesis. Use available counters, compiler reports
@@ -97,10 +88,9 @@ affect the outcome.
 For long searches where multiple structural directions are feasible and the expected value justifies
 the cost, keep a small portfolio: for each architecture record its defining difference, best valid
 candidate, current evidence, next discriminating experiment, resources spent and selection/deferment
-reason. Treat tile-only variants as part of their parent architecture unless evidence shows a
-structural change. Allocate exploratory work within any user-specified budget, periodically compare
-the expected value of the next experiment per direction, and record why a direction is continued or
-retired.
+reason. Group parameter variations under the design they test. Allocate exploratory work within
+the user's budget, periodically compare the value of the next experiment in each direction, and
+record why a direction is continued or retired.
 
 If no budget was specified, track cost and review points without inventing a hard limit or declaring
 success when an arbitrary count is reached.
@@ -108,9 +98,8 @@ success when an arbitrary count is reached.
 A fresh diagnosis can start from the contract, verified evidence and best implementation. Consult
 earlier experiments when they bear on the new idea.
 
-**Coupled changes:** Test dependent changes together when the mechanism requires it. For example,
-test a larger tile with its matching work partition if the tile alone would hurt occupancy.
-Record the dependency and evaluate the combined result against the task contract.
+**Coupled changes:** Test dependent changes together when the mechanism requires it. Record the
+dependency and evaluate the combined result against the task contract.
 
 ## Further reading
 
